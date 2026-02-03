@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyBingo - Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        #numberInput {
+            width: 120px;
+            padding: 0.5rem 1rem;
+            font-size: 1.5rem;
+            text-align: center;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        #numberInput:focus {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.5);
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-add {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #ff5252;
+            color: white;
+        }
+
+        .btn-undo {
+            background: #607D8B;
+            color: white;
+        }
+
+        .btn-undo:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Main Layout */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 1rem;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Bingo Grid */
+        .bingo-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow: hidden;
+        }
+
+        /* Last Number Display */
+        .last-number-container {
+            background: white;
+            border-radius: 12px;
+            padding: 0.75rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .last-number-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .last-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .last-number-letter {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #667eea;
+        }
+
+        .last-number-value {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #333;
+            line-height: 1;
+        }
+
+        .last-number-empty {
+            font-size: 1.5rem;
+            color: #ccc;
+        }
+
+        /* Bingo Grid */
+        .bingo-grid-container {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.3rem;
+            flex: 1;
+        }
+
+        .bingo-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .column-header {
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 0.3rem;
+            border-radius: 6px;
+            color: white;
+        }
+
+        .column-header.B { background: #e53935; }
+        .column-header.I { background: #FB8C00; }
+        .column-header.N { background: #43A047; }
+        .column-header.G { background: #1E88E5; }
+        .column-header.O { background: #8E24AA; }
+
+        .column-numbers {
+            flex: 1;
+            display: grid;
+            grid-template-rows: repeat(15, 1fr);
+            gap: 0.15rem;
+        }
+
+        .number-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border-radius: 4px;
+            background: #f0f0f0;
+            color: #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .number-cell.called {
+            background: #2e7d32;
+            color: white;
+            font-weight: 700;
+        }
+
+        .number-cell.last-called {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 0 0 3px #667eea, 0 4px 15px rgba(102, 126, 234, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 3px #667eea, 0 4px 15px rgba(102, 126, 234, 0.4); }
+            50% { box-shadow: 0 0 0 3px #667eea, 0 4px 25px rgba(102, 126, 234, 0.6); }
+        }
+
+        /* Right Panel - History */
+        .history-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .history-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-count {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+
+        .history-item:first-child {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .history-order {
+            font-size: 0.8rem;
+            color: #999;
+            min-width: 30px;
+        }
+
+        .history-item:first-child .history-order {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .history-letter {
+            font-weight: 700;
+            min-width: 20px;
+        }
+
+        .history-number {
+            font-weight: 600;
+        }
+
+        /* Number announcement overlay */
+        .number-announcement {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .number-announcement.show {
+            opacity: 1;
+        }
+
+        .announcement-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            transform: scale(0.5);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .number-announcement.show .announcement-content {
+            transform: scale(1);
+        }
+
+        .announcement-letter {
+            font-size: 8rem;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 0 40px rgba(255,255,255,0.5);
+        }
+
+        .announcement-number {
+            font-size: 16rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+            text-shadow: 0 0 60px rgba(255,255,255,0.5);
+        }
+
+        .announcement-letter.B { color: #e53935; }
+        .announcement-letter.I { color: #FB8C00; }
+        .announcement-letter.N { color: #43A047; }
+        .announcement-letter.G { color: #1E88E5; }
+        .announcement-letter.O { color: #8E24AA; }
+
+        /* Error feedback */
+        .input-error {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+
+            .history-panel {
+                order: 3;
+                max-height: 200px;
+            }
+
+            .last-number-value {
+                font-size: 4rem;
+            }
+
+            .last-number-letter {
+                font-size: 3rem;
+            }
+        }
+
+        /* Fullscreen optimization */
+        @media (min-height: 800px) {
+            .number-cell {
+                font-size: 1.8rem;
+            }
+
+            .column-header {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎱 EasyBingo</h1>
+        <div class="header-controls">
+            <input type="number" id="numberInput" min="1" max="75" placeholder="1-75" autofocus>
+            <button class="btn btn-add" onclick="addNumber()">Adicionar</button>
+            <button class="btn btn-undo" id="undoBtn" onclick="undoLast()" disabled>Desfazer</button>
+            <button class="btn btn-reset" onclick="resetGame()">Resetar</button>
+        </div>
+    </header>
+
+    <!-- Number announcement overlay -->
+    <div class="number-announcement" id="announcement">
+        <div class="announcement-content">
+            <div class="announcement-letter" id="announcementLetter">B</div>
+            <div class="announcement-number" id="announcementNumber">1</div>
+        </div>
+    </div>
+
+    <main>
+        <div class="bingo-panel">
+            <div class="last-number-container">
+                <div class="last-number-label">Último Número Sorteado</div>
+                <div class="last-number" id="lastNumber">
+                    <span class="last-number-empty">Aguardando...</span>
+                </div>
+            </div>
+
+            <div class="bingo-grid-container">
+                <div class="bingo-grid" id="bingoGrid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <div class="history-panel">
+            <div class="history-header">
+                <span>Histórico</span>
+                <span class="history-count" id="historyCount">0</span>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Constants
+        const COLUMNS = ['B', 'I', 'N', 'G', 'O'];
+        const NUMBERS_PER_COLUMN = 15;
+        const STORAGE_KEY = 'easybingo_state';
+
+        // State
+        let calledNumbers = new Set();
+        let history = [];
+        let lastKnownLength = 0;
+
+        // Get column letter for a number
+        function getColumnLetter(num) {
+            if (num >= 1 && num <= 15) return 'B';
+            if (num >= 16 && num <= 30) return 'I';
+            if (num >= 31 && num <= 45) return 'N';
+            if (num >= 46 && num <= 60) return 'G';
+            if (num >= 61 && num <= 75) return 'O';
+            return null;
+        }
+
+        // Initialize the bingo grid
+        function initGrid() {
+            const grid = document.getElementById('bingoGrid');
+            grid.innerHTML = '';
+
+            COLUMNS.forEach((letter, colIndex) => {
+                const column = document.createElement('div');
+                column.className = 'bingo-column';
+
+                // Header
+                const header = document.createElement('div');
+                header.className = `column-header ${letter}`;
+                header.textContent = letter;
+                column.appendChild(header);
+
+                // Numbers container
+                const numbersContainer = document.createElement('div');
+                numbersContainer.className = 'column-numbers';
+
+                // Create cells for each number in this column
+                for (let row = 0; row < NUMBERS_PER_COLUMN; row++) {
+                    const num = colIndex * NUMBERS_PER_COLUMN + row + 1;
+                    const cell = document.createElement('div');
+                    cell.className = 'number-cell';
+                    cell.id = `cell-${num}`;
+                    cell.textContent = num;
+                    numbersContainer.appendChild(cell);
+                }
+
+                column.appendChild(numbersContainer);
+                grid.appendChild(column);
+            });
+        }
+
+        // Update the display
+        function updateDisplay() {
+            // Update grid
+            for (let num = 1; num <= 75; num++) {
+                const cell = document.getElementById(`cell-${num}`);
+                cell.classList.remove('called', 'last-called');
+                
+                if (calledNumbers.has(num)) {
+                    cell.classList.add('called');
+                    if (history.length > 0 && history[history.length - 1] === num) {
+                        cell.classList.add('last-called');
+                    }
+                }
+            }
+
+            // Update last number display
+            const lastNumberEl = document.getElementById('lastNumber');
+            if (history.length > 0) {
+                const lastNum = history[history.length - 1];
+                const letter = getColumnLetter(lastNum);
+                lastNumberEl.innerHTML = `
+                    <span class="last-number-letter">${letter}</span>
+                    <span class="last-number-value">${lastNum}</span>
+                `;
+            } else {
+                lastNumberEl.innerHTML = '<span class="last-number-empty">Aguardando...</span>';
+            }
+
+            // Update history list
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            // Show history in reverse order (most recent first)
+            for (let i = history.length - 1; i >= 0; i--) {
+                const num = history[i];
+                const letter = getColumnLetter(num);
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <span class="history-order">${i + 1}º</span>
+                    <span class="history-letter">${letter}</span>
+                    <span class="history-number">${num}</span>
+                `;
+                historyList.appendChild(item);
+            }
+
+            // Update undo button state
+            document.getElementById('undoBtn').disabled = history.length === 0;
+
+            // Update count
+            document.getElementById('historyCount').textContent = history.length;
+        }
+
+        // Add a number
+        function addNumber() {
+            const input = document.getElementById('numberInput');
+            const num = parseInt(input.value, 10);
+
+            // Validate
+            if (isNaN(num) || num < 1 || num > 75) {
+                input.classList.add('input-error');
+                setTimeout(() => input.classList.remove('input-error'), 300);
+                input.select();
+                return;
+            }
+
+            if (calledNumbers.has(num)) {
+                alert(`O número ${num} já foi sorteado!`);
+                input.select();
+                return;
+            }
+
+            // Add number
+            calledNumbers.add(num);
+            history.push(num);
+
+            // Show announcement animation
+            showAnnouncement(num);
+
+            // Save and update
+            saveState();
+            updateDisplay();
+
+            // Clear and refocus input
+            input.value = '';
+            input.focus();
+        }
+
+        // Show announcement animation
+        function showAnnouncement(num) {
+            const letter = getColumnLetter(num);
+            const announcement = document.getElementById('announcement');
+            const letterEl = document.getElementById('announcementLetter');
+            const numberEl = document.getElementById('announcementNumber');
+
+            letterEl.textContent = letter;
+            letterEl.className = 'announcement-letter ' + letter;
+            numberEl.textContent = num;
+
+            announcement.classList.add('show');
+
+            setTimeout(() => {
+                announcement.classList.remove('show');
+            }, 2500);
+        }
+
+        // Undo last number
+        function undoLast() {
+            if (history.length > 0) {
+                const lastNum = history[history.length - 1];
+                history.pop();
+                calledNumbers.delete(lastNum);
+                saveState();
+                updateDisplay();
+                document.getElementById('numberInput').focus();
+            }
+        }
+
+        // Reset the game
+        function resetGame() {
+            if (history.length === 0 || confirm('Tem certeza que deseja resetar o jogo? Todos os números serão apagados.')) {
+                calledNumbers.clear();
+                history = [];
+                saveState();
+                updateDisplay();
+                document.getElementById('numberInput').focus();
+            }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            const state = {
+                calledNumbers: Array.from(calledNumbers),
+                history: history
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        // Load state from localStorage
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    calledNumbers = new Set(state.calledNumbers || []);
+                    history = state.history || [];
+                } catch (e) {
+                    console.error('Error loading state:', e);
+                    calledNumbers = new Set();
+                    history = [];
+                }
+            }
+        }
+
+        // Listen for storage changes (from control panel)
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                const oldLength = history.length;
+                loadState();
+                
+                // Check if a new number was added
+                if (history.length > oldLength) {
+                    const newNum = history[history.length - 1];
+                    showAnnouncement(newNum);
+                }
+                
+                updateDisplay();
+            }
+        });
+
+        // Also poll for changes (fallback for same-tab updates)
+        setInterval(() => {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    const newHistory = state.history || [];
+                    
+                    if (newHistory.length !== history.length || 
+                        (newHistory.length > 0 && history.length > 0 && 
+                         newHistory[newHistory.length - 1] !== history[history.length - 1])) {
+                        
+                        const oldLength = history.length;
+                        calledNumbers = new Set(state.calledNumbers || []);
+                        history = newHistory;
+                        
+                        // Show announcement for new number
+                        if (history.length > oldLength) {
+                            showAnnouncement(history[history.length - 1]);
+                        }
+                        
+                        updateDisplay();
+                    }
+                } catch (e) {
+                    console.error('Error polling state:', e);
+                }
+            }
+        }, 500);
+
+        // Handle Enter key on input
+        document.getElementById('numberInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addNumber();
+            }
+        });
+
+        // Initialize
+        initGrid();
+        loadState();
+        updateDisplay();
+    </script>
+</body>
+</html>
