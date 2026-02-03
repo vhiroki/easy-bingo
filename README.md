@@ -4,9 +4,8 @@ A simple, no-setup bingo game for events and parties. Just open in a browser and
 
 ## Features
 
-- **Standalone Mode** (`index.html`) - All-in-one bingo board with number input
-- **Dual Screen Mode** - Perfect for events:
-  - `display.html` - Show on projector/TV for players
+- **Two-screen setup** - Perfect for events:
+  - `index.html` - Show on projector/TV for players
   - `control.html` - Use on your phone/tablet to call numbers
 - Real-time sync between control and display using localStorage
 - Undo last number and reset game
@@ -16,8 +15,8 @@ A simple, no-setup bingo game for events and parties. Just open in a browser and
 
 ## Usage
 
-1. Open `index.html` for a quick standalone game, or
-2. Open `display.html` on a big screen and `control.html` on your device for events
+1. Open `index.html` on a big screen (projector/TV)
+2. Open `control.html` on your phone/tablet to call numbers
 
 No server required - works entirely in the browser!
 
